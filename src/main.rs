@@ -345,8 +345,16 @@ fn snake_growth(
     mut commands: Commands,
     mut segments: ResMut<SnakeSegments>,
     mut growth_reader: EventReader<GrowthEvent>,
+    positions: Query<&Transform>,
 ) {
     if growth_reader.read().next().is_some() {
+        // Get the position of the last segment
+        let last_segment_pos = if let Some(last_segment) = segments.last() {
+            positions.get(*last_segment).unwrap().translation
+        } else {
+            Vec3::ZERO // Fallback, should never happen
+        };
+
         segments.push(
             commands
                 .spawn((
@@ -355,7 +363,7 @@ fn snake_growth(
                         custom_size: Some(Vec2::new(CELL_SIZE, CELL_SIZE)),
                         ..default()
                     },
-                    Transform::from_translation(Vec3::ZERO),
+                    Transform::from_translation(last_segment_pos),
                     Visibility::default(),
                     SnakeSegment,
                 ))
