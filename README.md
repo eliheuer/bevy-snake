@@ -6,11 +6,11 @@ A classic Snake game implementation using Rust and the Bevy game engine.
 
 ## About
 
-In this game, players control a snake that grows longer as it eats food while avoiding collisions with walls and itself. The original Snake game concept dates back to the 1976 arcade game Blockade, and it gained massive popularity in the late 1990s when it was pre-loaded on Nokia mobile phones and used as a demo application for Microsoft QBasic. [Read more about Snake's history on Wikipedia](https://en.wikipedia.org/wiki/Snake_(video_game)).
+In this game, players control a snake that grows longer as it eats food while avoiding collisions with walls and itself. The original Snake game concept dates back to the 1976 arcade game Blockade, and it gained popularity in the late 1990s when it was pre-loaded on Nokia mobile phones and used as a demo application for Microsoft QBasic. [Read more about Snake's history on Wikipedia](https://en.wikipedia.org/wiki/Snake_(video_game_genre)).
 
 ## Features
 
-- Smooth snake movement using WASD or arrow keys
+- Snake movement using WASD or arrow keys
 - Growing snake mechanics when eating food
 - Score tracking
 - Wall collision detection
