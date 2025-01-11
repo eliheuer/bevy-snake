@@ -1,6 +1,6 @@
 # Bevy Snake Game
 
-![Snake Game Screenshot](documentation/screenshots/screenshot-2025-01-10.png)
+![Snake Game Screenshot](documentation/screenshots/Screenshot-2025-01-10.png)
 
 A classic Snake game implementation using Rust and the Bevy game engine.
 
