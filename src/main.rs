@@ -1,6 +1,6 @@
-//! A simple snake game demonstrating built with Bevy.
+//! A simple snake game built with Rust and Bevy.
 //! Move with arrow keys or WASD.
-//! Eat the red food to grow. Don't hit walls or yourself!
+//! Eat the red food to grow. Don't hit walls or yourself.
 
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
