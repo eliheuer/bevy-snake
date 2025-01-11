@@ -1,13 +1,11 @@
-//! A simple snake game built with Rust and Bevy.
+//! A simple snake game demonstrating built with Bevy.
 //! Move with arrow keys or WASD.
-//! Eat the red food to grow. Don't hit walls or yourself.
+//! Eat the red food to grow. Don't hit walls or yourself!
 
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
 // Game configuration constants
-const ARENA_WIDTH: u32 = 24;
-const ARENA_HEIGHT: u32 = 24;
 const CELL_SIZE: f32 = 24.0;
 const SNAKE_HEAD_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
 const SNAKE_SEGMENT_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
@@ -86,7 +84,7 @@ fn main() {
         )))
         .add_event::<GrowthEvent>()
         .add_event::<GameOverEvent>()
-        .add_systems(Startup, setup)
+        .add_systems(Startup, setup.run_if(|windows: Query<&Window>| windows.get_single().is_ok()))
         .add_systems(
             Update,
             (
@@ -104,62 +102,9 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<&Window>) {
     // Camera
     commands.spawn(Camera2d);
-
-    // Walls
-    // Left wall
-    commands.spawn((
-        Wall,
-        Sprite {
-            color: Color::srgb(0.8, 0.8, 0.8),
-            custom_size: Some(Vec2::new(CELL_SIZE, (ARENA_HEIGHT + 3) as f32 * CELL_SIZE)),
-            ..default()
-        },
-        Transform::from_xyz(
-            (-(ARENA_WIDTH as i32) as f32 / 2.0 - 1.0) * CELL_SIZE,
-            0.0,
-            0.0,
-        ),
-    ));
-
-    // Right wall
-    commands.spawn((
-        Wall,
-        Sprite {
-            color: Color::srgb(0.8, 0.8, 0.8),
-            custom_size: Some(Vec2::new(CELL_SIZE, (ARENA_HEIGHT + 3) as f32 * CELL_SIZE)),
-            ..default()
-        },
-        Transform::from_xyz((ARENA_WIDTH as f32 / 2.0 + 1.0) * CELL_SIZE, 0.0, 0.0),
-    ));
-
-    // Bottom wall
-    commands.spawn((
-        Wall,
-        Sprite {
-            color: Color::srgb(0.8, 0.8, 0.8),
-            custom_size: Some(Vec2::new((ARENA_WIDTH + 3) as f32 * CELL_SIZE, CELL_SIZE)),
-            ..default()
-        },
-        Transform::from_xyz(
-            0.0,
-            (-(ARENA_HEIGHT as i32) as f32 / 2.0 - 1.0) * CELL_SIZE,
-            0.0,
-        ),
-    ));
-
-    // Top wall
-    commands.spawn((
-        Wall,
-        Sprite {
-            color: Color::srgb(0.8, 0.8, 0.8),
-            custom_size: Some(Vec2::new((ARENA_WIDTH + 3) as f32 * CELL_SIZE, CELL_SIZE)),
-            ..default()
-        },
-        Transform::from_xyz(0.0, (ARENA_HEIGHT as f32 / 2.0 + 1.0) * CELL_SIZE, 0.0),
-    ));
 
     // First spawn the head
     let head = commands
@@ -195,7 +140,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(SnakeSegments(vec![head, segment]));
 
     // Food
-    spawn_food(&mut commands);
+    if let Ok(window) = windows.get_single() {
+        spawn_food(&mut commands, window);
+    }
 
     // Scoreboard
     commands.spawn((
@@ -251,6 +198,7 @@ fn snake_movement(
     mut positions: Query<&mut Transform>,
     time: Res<Time>,
     mut timer: ResMut<MovementTimer>,
+    windows: Query<&Window>,
 ) {
     if !timer.0.tick(time.delta()).finished() {
         return;
@@ -259,7 +207,7 @@ fn snake_movement(
     if let Some((head_entity, head)) = heads.iter_mut().next() {
         let segment_positions = segments
             .iter()
-            .skip(1) // Skip the head entity
+            .skip(1)
             .map(|e| positions.get_mut(*e).unwrap().translation)
             .collect::<Vec<Vec3>>();
 
@@ -276,15 +224,18 @@ fn snake_movement(
             game_over_writer.send(GameOverEvent);
         }
 
-        // Check for wall collision
-        let half_arena_width = (ARENA_WIDTH as f32 * CELL_SIZE) / 2.0;
-        let half_arena_height = (ARENA_HEIGHT as f32 * CELL_SIZE) / 2.0;
-        if head_pos.translation.x < -half_arena_width
-            || head_pos.translation.x > half_arena_width
-            || head_pos.translation.y < -half_arena_height
-            || head_pos.translation.y > half_arena_height
-        {
-            game_over_writer.send(GameOverEvent);
+        // Check for window bounds collision
+        if let Ok(window) = windows.get_single() {
+            let half_width = window.width() / 2.0;
+            let half_height = window.height() / 2.0;
+
+            if head_pos.translation.x < -half_width
+                || head_pos.translation.x > half_width
+                || head_pos.translation.y < -half_height
+                || head_pos.translation.y > half_height
+            {
+                game_over_writer.send(GameOverEvent);
+            }
         }
 
         // Update body segments
@@ -305,6 +256,7 @@ fn snake_eating(
     mut score: ResMut<Score>,
     food_positions: Query<(Entity, &Transform), With<Food>>,
     head_positions: Query<&Transform, With<SnakeHead>>,
+    windows: Query<&Window>,
 ) {
     for head_pos in head_positions.iter() {
         for (food_entity, food_pos) in food_positions.iter() {
@@ -314,17 +266,25 @@ fn snake_eating(
                 commands.entity(food_entity).despawn();
                 growth_writer.send(GrowthEvent);
                 score.0 += 1;
-                spawn_food(&mut commands);
+                if let Ok(window) = windows.get_single() {
+                    spawn_food(&mut commands, window);
+                }
             }
         }
     }
 }
 
-fn spawn_food(commands: &mut Commands) {
+fn spawn_food(commands: &mut Commands, window: &Window) {
     let mut rng = thread_rng();
-    let x = (rng.gen_range(-(ARENA_WIDTH as i32) / 2..(ARENA_WIDTH as i32) / 2)) as f32 * CELL_SIZE;
-    let y =
-        (rng.gen_range(-(ARENA_HEIGHT as i32) / 2..(ARENA_HEIGHT as i32) / 2)) as f32 * CELL_SIZE;
+    let half_width = (window.width() / 2.0) - CELL_SIZE;
+    let half_height = (window.height() / 2.0) - CELL_SIZE;
+    
+    let x = rng.gen_range(-half_width..half_width);
+    let y = rng.gen_range(-half_height..half_height);
+    
+    // Round to nearest cell size
+    let x = (x / CELL_SIZE).round() * CELL_SIZE;
+    let y = (y / CELL_SIZE).round() * CELL_SIZE;
 
     commands.spawn((
         Sprite {
@@ -402,13 +362,13 @@ fn handle_game_over(
     segments: Query<Entity, With<SnakeSegment>>,
     heads: Query<Entity, With<SnakeHead>>,
     food: Query<Entity, With<Food>>,
-    walls: Query<Entity, With<Wall>>,
     text: Query<Entity, With<Text>>,
     asset_server: Res<AssetServer>,
+    windows: Query<&Window>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         // Remove all entities
-        for entity in segments.iter().chain(food.iter()).chain(walls.iter()) {
+        for entity in segments.iter().chain(food.iter()) {
             commands.entity(entity).despawn();
         }
         for entity in heads.iter() {
@@ -425,7 +385,7 @@ fn handle_game_over(
         segments_res.clear();
 
         // Reset game
-        setup(commands, asset_server);
+        setup(commands, asset_server, windows);
         next_state.set(GameState::Playing);
     }
 }
@@ -449,4 +409,3 @@ fn handle_pause(
         }
     }
 }
-
