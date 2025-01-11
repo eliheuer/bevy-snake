@@ -21,6 +21,7 @@ const GAME_FONT: &str = "fonts/Rena-BoldDisplay.ttf";
 enum GameState {
     #[default]
     Playing,
+    Paused,
     GameOver,
 }
 
@@ -89,7 +90,8 @@ fn main() {
         .add_systems(
             Update,
             (
-                snake_movement_input,
+                handle_pause,
+                snake_movement_input.run_if(in_state(GameState::Playing)),
                 snake_movement.run_if(in_state(GameState::Playing)),
                 snake_eating.run_if(in_state(GameState::Playing)),
                 snake_growth.run_if(in_state(GameState::Playing)),
@@ -433,3 +435,18 @@ fn update_scoreboard(score: Res<Score>, mut query: Query<&mut Text>) {
         text.0 = format!("Score: {}", score.0);
     }
 }
+
+fn handle_pause(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    current_state: Res<State<GameState>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyP) {
+        match current_state.get() {
+            GameState::Playing => next_state.set(GameState::Paused),
+            GameState::Paused => next_state.set(GameState::Playing),
+            _ => (), // Do nothing in other states
+        }
+    }
+}
+
