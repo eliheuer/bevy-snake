@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng};
 
 // Game configuration constants
 const CELL_SIZE: f32 = 32.0;
-const GRID_SIZE: u32 = 32;
+const GRID_SIZE: u32 = 24;
 const WINDOW_SIZE: f32 = CELL_SIZE * GRID_SIZE as f32;
 const SNAKE_HEAD_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
 const SNAKE_SEGMENT_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
