@@ -1,6 +1,7 @@
-//! A simple snake game demonstrating built with Bevy.
+//! A simple snake game built with Rust and Bevy.
 //! Move with arrow keys or WASD.
-//! Eat the red food to grow. Don't hit walls or yourself!
+//! Eat the red food (apple?) to grow.
+//! Don't hit edge of the window or yourself!
 
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
@@ -9,13 +10,15 @@ use rand::{thread_rng, Rng};
 const CELL_SIZE: f32 = 32.0;
 const GRID_SIZE: u32 = 24;
 const WINDOW_SIZE: f32 = CELL_SIZE * GRID_SIZE as f32;
-const SNAKE_HEAD_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
-const SNAKE_SEGMENT_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
-const FOOD_COLOR: Color = Color::srgb(1.0, 0.1, 0.0);
 const BACKGROUND_COLOR: Color = Color::srgb(0.04, 0.04, 0.04);
 const SCORE_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
-const SNAKE_MOVE_SPEED: f32 = 0.075; // Lower number = faster speed (seconds between moves)
 const GAME_FONT: &str = "fonts/Rena-BoldDisplay.ttf";
+
+const SNAKE_HEAD_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
+const SNAKE_SEGMENT_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
+const SNAKE_MOVE_SPEED: f32 = 0.1; // Lower number = faster speed (seconds between moves)
+
+const FOOD_COLOR: Color = Color::srgb(1.0, 0.1, 0.0);
 
 #[derive(Default, States, Clone, Eq, PartialEq, Debug, Hash)]
 enum GameState {
@@ -93,7 +96,10 @@ fn main() {
         )))
         .add_event::<GrowthEvent>()
         .add_event::<GameOverEvent>()
-        .add_systems(Startup, setup.run_if(|windows: Query<&Window>| windows.get_single().is_ok()))
+        .add_systems(
+            Startup,
+            setup.run_if(|windows: Query<&Window>| windows.get_single().is_ok()),
+        )
         .add_systems(
             Update,
             (
@@ -155,17 +161,17 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<
 
     // Scoreboard
     commands.spawn((
-        Text::new("Score: 0"),
+        Text::new("Score 0"),
         TextFont {
             font: asset_server.load(GAME_FONT),
-            font_size: 56.0,
+            font_size: 128.0,
             ..default()
         },
         TextColor(SCORE_COLOR),
         Node {
             position_type: PositionType::Absolute,
-            top: Val::Px(24.0),
-            left: Val::Px(24.0),
+            top: Val::Px(8.0),
+            left: Val::Px(16.0),
             ..default()
         },
     ));
@@ -282,11 +288,11 @@ fn snake_eating(
 fn spawn_food(commands: &mut Commands, window: &Window) {
     let mut rng = thread_rng();
     let half_grid = (GRID_SIZE as f32 / 2.0);
-    
+
     // Generate position in grid coordinates
     let grid_x = rng.gen_range(-half_grid..half_grid);
     let grid_y = rng.gen_range(-half_grid..half_grid);
-    
+
     // Convert to world coordinates and ensure alignment to grid
     let x = grid_x.floor() * CELL_SIZE;
     let y = grid_y.floor() * CELL_SIZE;
@@ -397,7 +403,7 @@ fn handle_game_over(
 
 fn update_scoreboard(score: Res<Score>, mut query: Query<&mut Text>) {
     for mut text in &mut query {
-        text.0 = format!("Score: {}", score.0);
+        text.0 = format!("Score {}", score.0);
     }
 }
 
