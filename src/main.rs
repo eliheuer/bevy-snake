@@ -6,7 +6,9 @@ use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
 // Game configuration constants
-const CELL_SIZE: f32 = 24.0;
+const CELL_SIZE: f32 = 32.0;
+const GRID_SIZE: u32 = 32;
+const WINDOW_SIZE: f32 = CELL_SIZE * GRID_SIZE as f32;
 const SNAKE_HEAD_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
 const SNAKE_SEGMENT_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
 const FOOD_COLOR: Color = Color::srgb(1.0, 0.1, 0.0);
@@ -73,7 +75,14 @@ impl Direction {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                resolution: (WINDOW_SIZE, WINDOW_SIZE).into(),
+                resizable: false,
+                ..default()
+            }),
+            ..default()
+        }))
         .init_state::<GameState>()
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .insert_resource(SnakeSegments::default())
@@ -225,17 +234,13 @@ fn snake_movement(
         }
 
         // Check for window bounds collision
-        if let Ok(window) = windows.get_single() {
-            let half_width = window.width() / 2.0;
-            let half_height = window.height() / 2.0;
-
-            if head_pos.translation.x < -half_width
-                || head_pos.translation.x > half_width
-                || head_pos.translation.y < -half_height
-                || head_pos.translation.y > half_height
-            {
-                game_over_writer.send(GameOverEvent);
-            }
+        let half_size = (GRID_SIZE as f32 / 2.0) * CELL_SIZE;
+        if head_pos.translation.x < -half_size
+            || head_pos.translation.x >= half_size
+            || head_pos.translation.y < -half_size
+            || head_pos.translation.y >= half_size
+        {
+            game_over_writer.send(GameOverEvent);
         }
 
         // Update body segments
@@ -276,15 +281,15 @@ fn snake_eating(
 
 fn spawn_food(commands: &mut Commands, window: &Window) {
     let mut rng = thread_rng();
-    let half_width = (window.width() / 2.0) - CELL_SIZE;
-    let half_height = (window.height() / 2.0) - CELL_SIZE;
+    let half_grid = (GRID_SIZE as f32 / 2.0);
     
-    let x = rng.gen_range(-half_width..half_width);
-    let y = rng.gen_range(-half_height..half_height);
+    // Generate position in grid coordinates
+    let grid_x = rng.gen_range(-half_grid..half_grid);
+    let grid_y = rng.gen_range(-half_grid..half_grid);
     
-    // Round to nearest cell size
-    let x = (x / CELL_SIZE).round() * CELL_SIZE;
-    let y = (y / CELL_SIZE).round() * CELL_SIZE;
+    // Convert to world coordinates and ensure alignment to grid
+    let x = grid_x.floor() * CELL_SIZE;
+    let y = grid_y.floor() * CELL_SIZE;
 
     commands.spawn((
         Sprite {
