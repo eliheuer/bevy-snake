@@ -170,8 +170,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, windows: Query<
         TextColor(SCORE_COLOR),
         Node {
             position_type: PositionType::Absolute,
-            top: Val::Px(8.0),
-            left: Val::Px(16.0),
+            top: Val::Px(24.0),
+            left: Val::Px(32.0),
             ..default()
         },
     ));
