@@ -16,7 +16,7 @@ const GAME_FONT: &str = "fonts/Rena-BoldDisplay.ttf";
 
 const SNAKE_HEAD_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
 const SNAKE_SEGMENT_COLOR: Color = Color::srgb(0.2, 0.8, 0.3);
-const SNAKE_MOVE_SPEED: f32 = 0.1; // Lower number = faster speed (seconds between moves)
+const SNAKE_MOVE_SPEED: f32 = 0.075; // Lower number = faster speed (seconds between moves)
 
 const FOOD_COLOR: Color = Color::srgb(1.0, 0.1, 0.0);
 
